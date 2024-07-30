@@ -32,6 +32,7 @@
     <script>
         let map;
         let geocoder;
+        let infowindow;
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
@@ -40,6 +41,16 @@
             });
 
             geocoder = new google.maps.Geocoder();
+            infowindow = new google.maps.InfoWindow();
+
+            // 지하철 노선 GeoJSON 데이터 추가
+            map.data.loadGeoJson('URL_TO_YOUR_GEOJSON_DATA');
+
+            // 지하철 노선 스타일 설정
+            map.data.setStyle({
+                strokeColor: 'blue',
+                strokeWeight: 4
+            });
         }
 
         function geocodeAddresses(addresses) {
@@ -47,9 +58,14 @@
                 geocoder.geocode({ 'address': address }, function(results, status) {
                     if (status === 'OK') {
                         map.setCenter(results[0].geometry.location);
-                        new google.maps.Marker({
+                        let marker = new google.maps.Marker({
                             map: map,
                             position: results[0].geometry.location
+                        });
+
+                        google.maps.event.addListener(marker, 'click', function() {
+                            infowindow.setContent(address);
+                            infowindow.open(map, marker);
                         });
                     } else {
                         alert('Geocode was not successful for the following reason: ' + status);
