@@ -25,44 +25,62 @@
 </head>
 <body>
     <div id="input-container">
-        <textarea id="addresses" placeholder="Enter addresses, each on a new line"></textarea>
+        <textarea id="addresses" placeholder="Enter addresses, each on a new line">서울대입구역</textarea>
         <button onclick="updateMap()">Update Map</button>
     </div>
     <div id="map"></div>
     <script>
-        let map;
-        let geocoder;
-        let infowindow;
+        let map;         // 지도 객체
+        let geocoder;    // 주소를 좌표로 변환하는 객체
+        let infowindow;  // 마커 클릭 시 표시할 인포 윈도우 객체
+        let markers = []; // 마커 객체들을 저장하는 배열
 
+        // 초기화 함수, 페이지가 로드될 때 호출됨
         function initMap() {
+            // 서울대입구역의 초기 좌표 설정
+            const initialLocation = { lat: 37.481085, lng: 126.952645 };
+
+            // 지도 생성 및 초기 설정
             map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 10,
-                center: { lat: 37.7749, lng: -122.4194 } // 샌프란시스코 중심으로 초기화
+                zoom: 15,
+                center: initialLocation
             });
 
+            // Geocoder 객체 생성
             geocoder = new google.maps.Geocoder();
+            // InfoWindow 객체 생성
             infowindow = new google.maps.InfoWindow();
 
-            // 지하철 노선 GeoJSON 데이터 추가
-            map.data.loadGeoJson('URL_TO_YOUR_GEOJSON_DATA');
+            // 초기 마커 추가
+            let marker = new google.maps.Marker({
+                map: map,
+                position: initialLocation
+            });
+            markers.push(marker);
 
-            // 지하철 노선 스타일 설정
-            map.data.setStyle({
-                strokeColor: 'blue',
-                strokeWeight: 4
+            // 마커 클릭 이벤트 리스너 추가
+            google.maps.event.addListener(marker, 'click', function() {
+                infowindow.setContent("서울대입구역");
+                infowindow.open(map, marker);
             });
         }
 
+        // 주소 목록을 받아 해당 위치에 마커를 추가하는 함수
         function geocodeAddresses(addresses) {
             addresses.forEach(address => {
+                // 주소를 좌표로 변환
                 geocoder.geocode({ 'address': address }, function(results, status) {
                     if (status === 'OK') {
+                        // 지도 중심을 해당 위치로 이동
                         map.setCenter(results[0].geometry.location);
+                        // 마커 생성 및 지도에 추가
                         let marker = new google.maps.Marker({
                             map: map,
                             position: results[0].geometry.location
                         });
+                        markers.push(marker);
 
+                        // 마커 클릭 이벤트 리스너 추가
                         google.maps.event.addListener(marker, 'click', function() {
                             infowindow.setContent(address);
                             infowindow.open(map, marker);
@@ -74,10 +92,18 @@
             });
         }
 
+        // 기존 마커들을 모두 제거하는 함수
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+        }
+
+        // 지도를 업데이트하는 함수
         function updateMap() {
-            const input = document.getElementById('addresses').value;
-            const addresses = input.split('\n').filter(address => address.trim() !== '');
-            geocodeAddresses(addresses);
+            clearMarkers(); // 기존 마커 제거
+            const input = document.getElementById('addresses').value; // 입력된 주소들
+            const addresses = input.split('\n').filter(address => address.trim() !== ''); // 주소를 엔터로 구분
+            geocodeAddresses(addresses); // 주소들에 대한 마커 추가
         }
     </script>
 </body>
